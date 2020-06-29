@@ -1,3 +1,3 @@
 # rust-p2p
 
-![alt text](https://github.com/rarebu/p2p-rust/images/uml.png "UML Overview")
+![alt text](https://github.com/rarebu/rust-p2p/images/uml.png "UML Overview")
