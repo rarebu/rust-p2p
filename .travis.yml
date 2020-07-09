@@ -1,9 +1,10 @@
 language: rust
-rust:
-  - stable
-  - beta
-  - nightly
+
 jobs:
-  allow_failures:
-    - rust: nightly
-  fast_finish: true
+  include:
+    - stage: test
+      script:
+        - cargo test --verbose
+    - stage: rust-p2p
+      script:
+        - cargo run --verbose
