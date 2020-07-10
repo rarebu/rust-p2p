@@ -1,7 +1,8 @@
 extern crate rust_p2p;
 
-use rust_p2p::communication::server::Server;
+use rust_p2p::communication::server::server;
 
 pub fn main() {
-    let x = Server::server();
+    let x = server();
+    print!("asdfasdf");
 }
