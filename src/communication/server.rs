@@ -1,5 +1,7 @@
 use tokio::net::TcpListener;
 use tokio::prelude::*;
+use super::message::Message;
+
 
 #[tokio::main]
 pub async fn server() -> Result<(), Box<dyn std::error::Error>> {
@@ -25,10 +27,11 @@ pub async fn server() -> Result<(), Box<dyn std::error::Error>> {
                 };
 
                 // Write the data back
-                if let Err(e) = socket.write_all(&buf[0..n]).await {
-                    eprintln!("failed to write to socket; err = {:?}", e);
-                    return;
-                }
+                //if let Err(e) = socket.write_all(&buf[0..n]).await {
+                let message = Message::Body(String::from("Hey test message"));
+                let bytes = bincode::serialize(&message).unwrap();
+
+                socket.write_all(bytes.as_slice());
                 eprintln!("got message, wrote back")
             }
         });

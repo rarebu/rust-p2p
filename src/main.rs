@@ -13,7 +13,7 @@ pub fn main() {
             _ => {}
         }
     });
-    sleep(time::Duration::from_secs(2));
+    sleep(time::Duration::from_secs(20));
     client();
     println!("main\n");
 }

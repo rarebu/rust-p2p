@@ -1,6 +1,7 @@
 use tokio::net::TcpStream;
 use tokio::prelude::*;
 use tokio::net::lookup_host;
+use super::message::Message;
 
 #[tokio::main]
 pub async fn client() {
@@ -8,6 +9,8 @@ pub async fn client() {
     let mut stream = TcpStream::connect("127.0.0.1:8080").await.unwrap();
     println!("created stream");
 
-    let result = stream.write(b"hello world\n").await;
-    println!("wrote to stream; success={:?}", result.is_ok());
+    let message = Message::Body(String::from("Hey i am client"));
+    let bytes = bincode::serialize(&message).unwrap();
+    stream.write(bytes.as_slice()).await;
+    println!("wrote to stream; \n");
 }
