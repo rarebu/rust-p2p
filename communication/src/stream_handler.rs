@@ -5,7 +5,7 @@ use std::thread::spawn;
 use std::collections::VecDeque;
 use std::time::Duration;
 use super::message::{Message, Message2};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::sync::atomic::{Ordering, AtomicBool};
 
 #[derive(Debug)]
@@ -15,6 +15,7 @@ pub struct StreamHandler {
     to_send: Arc<Mutex<VecDeque<Message>>>,
     received: Arc<Mutex<VecDeque<Message>>>,
     shutdown: Arc<AtomicBool>,
+    write_all_shutdown: Arc<AtomicBool>,
     handle: Option<JoinHandle<()>>
 }
 
@@ -22,7 +23,8 @@ impl StreamHandler {
     pub fn new(mut stream: TcpStream) -> StreamHandler {
         let sends = Arc::new(Mutex::new(VecDeque::new()));
         let receives = Arc::new(Mutex::new(VecDeque::new()));
-        let switch = Arc::new(AtomicBool::new(false));
+        let shutdown_switch = Arc::new(AtomicBool::new(false));
+        let write_all_shutdown_switch = Arc::new(AtomicBool::new(false));
         let stream_peer = stream.peer_addr().unwrap();
         let stream_loc = stream.local_addr().unwrap();
         let mut header_information: Option<usize> = None;
@@ -32,7 +34,8 @@ impl StreamHandler {
             remote_peer: format!("{}:{}", stream_peer.ip(), stream_peer.port()),
             to_send: sends.clone(),
             received: receives.clone(),
-            shutdown: switch.clone(),
+            shutdown: shutdown_switch.clone(),
+            write_all_shutdown: write_all_shutdown_switch.clone(),
             handle: Option::from(spawn(move || {
                 loop {
                     //set timeout to avoid blocking loop
@@ -70,22 +73,38 @@ impl StreamHandler {
                         }
                     }
                     //write operation
-                    {
-                    let mut sends = sends.lock().unwrap();
-                    if !sends.is_empty() {
-                        let content = sends.pop_front().unwrap();
+                    let mut closure_serialize = |content| {
+
                         let content_message = bincode::serialize(&content).unwrap();
                         let header = Message2::Header(content_message.len());
                         let header_message = bincode::serialize(&header).unwrap();
 
-                        println!("Header: {:?}", header);
-                        println!("Content: {:?}", content);
+                        // println!("Header: {:?}", header);
+                        // println!("Content: {:?}", content);
 
                         stream.write_all(header_message.as_slice()).unwrap();
                         stream.write_all(content_message.as_slice()).unwrap();
-                    }}
+                    };
+                    {
+                    let mut sends = sends.lock().unwrap();
+                    if !sends.is_empty() {
+                        let content = sends.pop_front().unwrap();
+                        closure_serialize(content);
+                    }
+                    }
                     //shutdown option
-                    if switch.load(Ordering::SeqCst) {
+                    if shutdown_switch.load(Ordering::SeqCst) {
+                        if write_all_shutdown_switch.load(Ordering::SeqCst) {
+                            let mut sends = sends.lock().unwrap();
+                            loop {
+                                let tmp = sends.pop_back();
+                                match tmp {
+                                    Some(message) => closure_serialize(message),
+                                    None => break,
+                                }
+                            }
+                        }
+                        //über boolean steuern ob noch alle nachrichten gesendet werden müssen
                         break;
                     }
                 }
@@ -102,6 +121,13 @@ impl StreamHandler {
     pub fn send_message(&mut self, message: Message) {
         let mut to_send = self.to_send.lock().unwrap();
         to_send.push_back(message);
+    }
+
+    pub fn close_stream_and_send_all_messages(self) {
+
+        //alle messages die in der queue sind sollten gesendet werde, damit close message gesendet wird
+        // hier boolean setzen
+        self.close_stream();
     }
 
     pub fn close_stream(self) {
