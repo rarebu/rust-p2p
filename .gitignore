@@ -1,11 +1,3 @@
-/.idea/
-**/.idea/
-
-/target/
-**/target/
-
-/Cargo.lock
-**/Cargo.lock
-
-/tmp/
-**/tmp/
+/target
+**/*.rs.bk
+*.lock
