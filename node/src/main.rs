@@ -69,14 +69,14 @@ fn main() {
     // client disconnects stream
     println!("clients connections are1: {:?}", client.get_connections());
     println!("clients2 connections are2: {:?}", client2.get_connections());
-    client2.disconnect(ccon2);
+    client2.disconnect(ccon2, true);
     println!("clients2 connections are3: {:?}", client2.get_connections());
-    client.disconnect(ccon);
+    client.disconnect(ccon, true);
     println!("clients connections are4: {:?}", client.get_connections());
 
     // server disconnects stream
-    server.disconnect(scon);
-    server.disconnect(scon2);
+    server.disconnect(scon, false);
+    server.disconnect(scon2, false);
     println!("clients connections are: {:?}", client.get_connections());
     println!("servers connections are: {:?}", server.get_connections());
 

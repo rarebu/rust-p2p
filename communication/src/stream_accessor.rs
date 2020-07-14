@@ -35,10 +35,14 @@ impl StreamAccessor {
         stream.get_message()
     }
 
-    pub fn close(self) {
+    pub fn close(self, send_all: bool) {
         let stream = Arc::try_unwrap(self.stream).unwrap();
         let stream = stream.into_inner().unwrap();
-        stream.close_stream();
+        if send_all {
+            stream.close_stream_and_send_all_messages();
+        } else {
+            stream.close_stream();
+        }
     }
 
     pub fn equals(&self, other: &StreamAccessor) -> bool{

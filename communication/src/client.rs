@@ -37,7 +37,7 @@ impl Client {
     pub fn stop(mut self) {
         loop {
             if self.connected_streams.len() > 0 {
-                self.close_disconnect();
+                self.close_disconnect(true);
             } else { break; }
         }
     }
@@ -50,14 +50,14 @@ impl Client {
     }
 
 
-    pub fn disconnect(&mut self, connection: StreamAccessor) {
+    pub fn disconnect(&mut self, connection: StreamAccessor, send_all: bool) {
         let index = self.connected_streams.iter().position(|stream| stream.equals(&connection)).unwrap();
         self.connected_streams.remove(index);
-        connection.close();
+        connection.close(send_all);
     }
 
-    fn close_disconnect(&mut self) {
+    fn close_disconnect(&mut self, send_all: bool) {
         let stream = self.connected_streams.pop().unwrap();
-        stream.close();
+        stream.close(send_all);
     }
 }

@@ -72,7 +72,7 @@ impl Server {
         let connected_streams = self.connected_streams.lock().unwrap();
         loop {
             if connected_streams.len() > 0 {
-                self.close_disconnect();
+                self.close_disconnect(true);
             } else { break; }
         }
 
@@ -80,16 +80,16 @@ impl Server {
         self.handle_listener.join().unwrap();
     }
 
-    pub fn disconnect(&self, connection: StreamAccessor) {
+    pub fn disconnect(&self, connection: StreamAccessor, send_all: bool) {
         let mut connected_streams = self.connected_streams.lock().unwrap();
         let index= connected_streams.iter().position(|stream| stream.equals(&connection)).unwrap();
         connected_streams.remove(index);
-        connection.close();
+        connection.close(send_all);
     }
 
-    fn close_disconnect(&self) {
+    fn close_disconnect(&self, send_all: bool) {
         let mut connected_streams = self.connected_streams.lock().unwrap();
         let stream = connected_streams.pop().unwrap();
-        stream.close();
+        stream.close(send_all);
     }
 }

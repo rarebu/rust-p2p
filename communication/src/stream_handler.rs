@@ -5,7 +5,7 @@ use std::thread::spawn;
 use std::collections::VecDeque;
 use std::time::Duration;
 use super::message::{Message, Message2};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{Ordering, AtomicBool};
 
 #[derive(Debug)]
@@ -127,6 +127,7 @@ impl StreamHandler {
 
         //alle messages die in der queue sind sollten gesendet werde, damit close message gesendet wird
         // hier boolean setzen
+        self.write_all_shutdown.store(true, Ordering::SeqCst);
         self.close_stream();
     }
 
