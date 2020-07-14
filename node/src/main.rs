@@ -1,10 +1,10 @@
-extern crate p2p_network;
+extern crate communication;
 
-use p2p_network::communication::connectable::Connectable;
-use p2p_network::communication::server::Server;
-use p2p_network::communication::client::Client;
-use p2p_network::communication::message::Message;
-use p2p_network::communication::stream_accessor::StreamAccessor;
+use communication::connectable::Connectable;
+use communication::server::Server;
+use communication::client::Client;
+use communication::message::Message;
+use communication::stream_accessor::StreamAccessor;
 
 use std::{thread, time};
 
