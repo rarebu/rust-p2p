@@ -25,9 +25,7 @@ impl StreamHandler {
         let switch = Arc::new(AtomicBool::new(false));
         let stream_peer = stream.peer_addr().unwrap();
         let stream_loc = stream.local_addr().unwrap();
-        let mut header_information: Option<usize> = None;
-        let mut buf_vec: Vec<u8> = Vec::new();
-            StreamHandler {
+        StreamHandler {
             local_peer: format!("{}:{}", stream_loc.ip(), stream_loc.port()),
             remote_peer: format!("{}:{}", stream_peer.ip(), stream_peer.port()),
             to_send: sends.clone(),
@@ -45,44 +43,19 @@ impl StreamHandler {
                     };
                     //read successful?
                     if count > 0 {
-                        if header_information.is_none() {
-                            let header_msg: Message = bincode::deserialize(&buffer[..]).unwrap();
-                            match header_msg {
-                                Message::Header(s) => header_information = Some(s),
-                                _ => (),
-                            }
-                            // ack absenden
-                            continue;
-                        } else {
-                            let vec_tmp: Vec<u8> = buffer.iter().cloned().collect();
-                            buf_vec.extend(vec_tmp.iter().cloned());
-                            if header_information.unwrap() > count {
-                                header_information = Some(header_information.unwrap() - count);
-                                continue;
-                            } else {
-                                let msg: Message = bincode::deserialize(&buf_vec[..]).unwrap();
-                                {
-                                    let mut receives = receives.lock().unwrap();
-                                    receives.push_back(msg);
-                                    header_information = None;
-                                }
-                            }
+                        let msg: Message = bincode::deserialize(&buffer).unwrap();
+                        {
+                            let mut receives = receives.lock().unwrap();
+                            receives.push_back(msg);
                         }
                     }
                     //write operation
                     {
                     let mut sends = sends.lock().unwrap();
                     if !sends.is_empty() {
-                        let content = sends.pop_front().unwrap();
-                        let content_message = bincode::serialize(&content).unwrap();
-                        let header = Message::Header(content_message.len());
-                        let header_message = bincode::serialize(&header).unwrap();
-
-                        println!("Header: {:?}", header);
-                        println!("Content: {:?}", content);
-
-                        stream.write_all(header_message.as_slice()).unwrap();
-                        stream.write_all(content_message.as_slice()).unwrap();
+                        let message = sends.pop_front().unwrap();
+                        let bytes = bincode::serialize(&message).unwrap();
+                        stream.write_all(bytes.as_slice()).unwrap();
                     }}
                     //shutdown option
                     if switch.load(Ordering::SeqCst) {
