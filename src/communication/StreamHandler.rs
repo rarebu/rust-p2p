@@ -28,8 +28,10 @@ impl Actor for MyActor {
     }
 }
 
-fn main() {
+pub fn main() {
     let sys = System::new("example");
     let addr = MyActor.start();
     sys.run();
+
+    print!("dsf");
 }
