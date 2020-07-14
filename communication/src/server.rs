@@ -54,8 +54,8 @@ impl Server {
                     }
                     let stream = stream.unwrap();
                     let mut streams = streams.lock().unwrap();
-                    let v = stream.local_addr().unwrap().port();
-                    println!("V: {}", v);
+                    // let v = stream.local_addr().unwrap().port();
+                    // println!("V: {}", v);
                     streams.push(StreamAccessor::new(stream));
                 }
             })
