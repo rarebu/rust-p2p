@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::thread::spawn;
 use std::collections::VecDeque;
 use std::time::Duration;
-use super::message::Message;
+use super::message::{Message, Message2};
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{Ordering, AtomicBool};
 
@@ -46,9 +46,9 @@ impl StreamHandler {
                     //read successful?
                     if count > 0 {
                         if header_information.is_none() {
-                            let header_msg: Message = bincode::deserialize(&buffer[..]).unwrap();
+                            let header_msg: Message2 = bincode::deserialize(&buffer[..]).unwrap();
                             match header_msg {
-                                Message::Header(s) => header_information = Some(s),
+                                Message2::Header(s) => header_information = Some(s),
                                 _ => (),
                             }
                             // ack absenden
@@ -75,7 +75,7 @@ impl StreamHandler {
                     if !sends.is_empty() {
                         let content = sends.pop_front().unwrap();
                         let content_message = bincode::serialize(&content).unwrap();
-                        let header = Message::Header(content_message.len());
+                        let header = Message2::Header(content_message.len());
                         let header_message = bincode::serialize(&header).unwrap();
 
                         println!("Header: {:?}", header);
