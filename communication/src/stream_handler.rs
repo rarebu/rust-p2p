@@ -82,9 +82,6 @@ impl StreamHandler {
                         let header = Message2::Header(content_message.len());
                         let header_message = bincode::serialize(&header)?;
 
-                        // println!("Header: {:?}", header);
-                        // println!("Content: {:?}", content);
-
                         stream.write_all(header_message.as_slice()).map_err(|_| CommunicationError::new_write_error())?;
                         stream.write_all(content_message.as_slice()).map_err(|_| CommunicationError::new_write_error())?;
                         Ok(())
@@ -98,6 +95,7 @@ impl StreamHandler {
                     }
                     //shutdown option
                     if shutdown_switch.load(Ordering::SeqCst) {
+                        //über boolean steuern ob noch alle nachrichten gesendet werden müssen
                         if write_all_shutdown_switch.load(Ordering::SeqCst) {
                             let mut sends = sends.lock()?;
                             loop {
@@ -108,7 +106,6 @@ impl StreamHandler {
                                 }
                             }
                         }
-                        //über boolean steuern ob noch alle nachrichten gesendet werden müssen
                         break;
                     }
                 }

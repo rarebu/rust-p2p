@@ -22,18 +22,18 @@ impl StreamAccessor {
     }
 
     pub fn get_remote_peer(&self) -> Result<String, CommunicationError> {
-        let stream = self.stream.lock()?; //wieder 1
+        let stream = self.stream.lock()?;
         Ok(stream.remote_peer.clone())
     }
 
     pub fn write_message(&self, message: Message) -> Result<(), CommunicationError>{
-        let mut stream = self.stream.lock()?; //hier wird strong 2
+        let mut stream = self.stream.lock()?;
         stream.send_message(message)?;
         Ok(())
     }
 
     pub fn read_message(&self) -> Result<Option<Message>, CommunicationError> {
-        let mut stream = self.stream.lock()?; //hier strong 2
+        let mut stream = self.stream.lock()?;
         stream.get_message()
     }
 
