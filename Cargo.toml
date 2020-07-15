@@ -1,2 +1,2 @@
 [workspace]
-members = ["communication", "node"]
+members = ["communication", "node", "Examples"]
