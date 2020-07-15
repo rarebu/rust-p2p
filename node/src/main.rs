@@ -1,96 +1,54 @@
-//mod node;
-
-extern crate communication;
-
-use communication::connectable::Connectable;
-use communication::server::Server;
-use communication::client::Client;
-use communication::message::Message;
-use communication::stream_accessor::StreamAccessor;
+use node::node::Node;
 
 use std::{thread, time};
 
 
 fn main() {
-    let ip = String::from("127.0.0.1");
-    let port = 11224;
+    let localhost = String::from("127.0.0.1");
+    let mut node1 = Node::new(localhost.clone(), 11000); //client
 
-    // start server with listener and client
-    let server = Server::start(ip.clone(), port);
-    let mut client = Client::start();
-    let mut client2 = Client::start();
-    thread::sleep(time::Duration::from_millis(100));
+    let mut node2 = Node::new(localhost.clone(), 12000); //server
 
-    // client connecting to server
-    client.connect(ip.clone(), port);
-    client2.connect(ip, port);
+    println!("Hallo");
+    node1.connect(localhost.clone(), 12000); //node1 wird zum client
+    println!("Node1: {:?}", node1.get_connected_peers());
+    println!("Node2: {:?}", node2.get_connected_peers());
+    // let vec:Vec<&String> = node2.get_connected_peers().get(0).unwrap().split(":").collect();
+    let connected_peers = node2.get_connected_peers();
 
-    //get list of connections
-    let ccons = client.get_connections();
-    let ccons2 = client2.get_connections();
-    let scons = server.get_connections();
+    let address: Vec<&str> = connected_peers.get(0).unwrap().split(":").collect();
 
-    // get specific connection name
-    let ccon_string: String = ccons.get(0).unwrap().to_string();
-    let ccon_string2: String = ccons2.get(0).unwrap().to_string();
-    let scon_string: String = scons.get(0).unwrap().to_string();
-    let scon_string2: String = scons.get(1).unwrap().to_string();
-    println!("clients connections are: {:?}", ccons);
-    // println!("clients2 connections are: {:?}", ccons2);
-    println!("servers connections are: {:?}", scons);
+    let port: usize = address.get(1).unwrap().parse().unwrap();
 
-    // get specific connection
-    let ccon = client.get_connection(ccon_string).unwrap();
-    let ccon2 = client2.get_connection(ccon_string2).unwrap();
-    let scon = server.get_connection(scon_string).unwrap();
-    let scon2 = server.get_connection(scon_string2).unwrap();
+    node1.send_message(String::from("Hey this is a message by Node 1"), localhost.clone(), 12000);
+    println!("Node1: {:?}", node1.get_connected_peers());
+    println!("Node2: {:?}", node2.get_connected_peers());
+    println!("Port: {}", port);
 
-    // client sends message
-    send_message(&ccon, String::from("This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybThis is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?"));
-    // send_message(&ccon, String::from("This is the client, anybode there?"));
     thread::sleep(time::Duration::from_millis(1000));
+    let msg = node2.receive_message_from_peer(localhost.clone(), port).unwrap();
 
-    // server receives message
-    let a = receive_message(&scon);
-    println!("Server received from client:\n{}", a);
+    node2.send_message(String::from("Hey this is a message by Node 2"), localhost.clone(), port);
 
-    // server answers
-    send_message(&scon, String::from("This is the server, yes of course!"));
+    println!("Node2 received: {}", msg);
     thread::sleep(time::Duration::from_millis(1000));
+    let msg = node1.receive_message_from_peer(localhost.clone(), 12000).unwrap();
+    println!("Node1 received: {}", msg);
 
-    // client receives answer
-    let b = receive_message(&ccon);
-    println!("Client received from server:\n{}", b);
+    println!("Node1: {:?}", node1.get_connected_peers());
+    println!("Node2: {:?}", node2.get_connected_peers());
 
-    // consume accessor to drop arc reference
-//    ccon.consume();
-//    scon.consume();
 
-    // client disconnects stream
-    println!("clients connections are1: {:?}", client.get_connections());
-    println!("clients2 connections are2: {:?}", client2.get_connections());
-    client2.disconnect(ccon2, true);
-    println!("clients2 connections are3: {:?}", client2.get_connections());
-    client.disconnect(ccon, true);
-    println!("clients connections are4: {:?}", client.get_connections());
+    thread::sleep(time::Duration::from_millis(1000));
+    println!("node2 disconnects node1");
 
-    // server disconnects stream
-    server.disconnect(scon, false);
-    server.disconnect(scon2, false);
-    println!("clients connections are: {:?}", client.get_connections());
-    println!("servers connections are: {:?}", server.get_connections());
+    node2.disconnect(localhost.clone(), port);
 
-    // shutting down client and server
-    client.stop();
-    server.stop();
-    println!("Bye");
-}
 
-fn send_message(stream: &StreamAccessor, content: String) {
-    let content = Message::Content(content);
-    stream.write_message(content);
-}
+    println!("Jetzt könnte es aufgrund unserer fehlenden Fehlerbehandlung krachen");
+    node1.receive_message_from_peer(localhost.clone(), 12000);
+    println!("Jetzt sollten alle streams geschlossen sein!");
+    println!("Node1: {:?}", node1.get_connected_peers());
+    println!("Node2: {:?}", node2.get_connected_peers());
 
-fn receive_message(stream: &StreamAccessor) -> String {
-    format!("{:?}", stream.read_message().unwrap())
 }

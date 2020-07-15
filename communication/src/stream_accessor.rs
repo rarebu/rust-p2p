@@ -21,22 +21,22 @@ impl StreamAccessor {
     }
 
     pub fn get_remote_peer(&self) -> String {
-        let stream = self.stream.lock().unwrap();
+        let stream = self.stream.lock().unwrap(); //wieder 1
         stream.remote_peer.clone()
     }
 
     pub fn write_message(&self, message: Message) {
-        let mut stream = self.stream.lock().unwrap();
+        let mut stream = self.stream.lock().unwrap(); //hier wird strong 2
         stream.send_message(message);
     }
 
     pub fn read_message(&self) -> Option<Message> {
-        let mut stream = self.stream.lock().unwrap();
+        let mut stream = self.stream.lock().unwrap(); //hier strong 2
         stream.get_message()
     }
 
     pub fn close(self, send_all: bool) {
-        let stream = Arc::try_unwrap(self.stream).unwrap();
+        let stream = Arc::try_unwrap(self.stream).unwrap(); //hier auch 2
         let stream = stream.into_inner().unwrap();
         if send_all {
             stream.close_stream_and_send_all_messages();

@@ -27,6 +27,7 @@ impl Connectable for Server {
 
 
     fn get_connection(&self, peer_address: String) -> Option<StreamAccessor> {
+        println!("Pass reference to arc({}) outside", peer_address);
         let connected_streams = self.connected_streams.lock().unwrap();
         for stream in connected_streams.iter() {
             if peer_address == stream.get_remote_peer() {
@@ -38,7 +39,7 @@ impl Connectable for Server {
 }
 
 impl Server {
-    pub fn start(ip: String, port: i32) -> Server {
+    pub fn start(ip: String, port: usize) -> Server {
         let address = format!("{}:{}", ip, port);
         let streams = Arc::new(Mutex::new(Vec::new()));
         let switch = Arc::new(AtomicBool::new(false));

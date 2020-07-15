@@ -17,6 +17,7 @@ impl Connectable for Client {
     }
 
     fn get_connection(&self, peer_address: String) -> Option<StreamAccessor> {
+        println!("Pass reference to arc({}) outside", peer_address);
         for stream in self.connected_streams.iter() {
             if peer_address == stream.get_remote_peer() {
                 return Option::from(stream.clone());
@@ -42,7 +43,7 @@ impl Client {
         }
     }
 
-    pub fn connect(&mut self, ip: String, port: i32) {
+    pub fn connect(&mut self, ip: String, port: usize) {
 
         let address = format!("{}:{}", ip, port);
         let stream = TcpStream::connect(address).unwrap();
