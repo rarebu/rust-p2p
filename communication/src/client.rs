@@ -18,7 +18,6 @@ impl Connectable for Client {
     }
 
     fn get_connection(&self, peer_address: String) -> Result<Option<StreamAccessor>, CommunicationError> {
-        println!("Pass reference to arc({}) outside", peer_address);
         for stream in self.connected_streams.iter() {
             if peer_address == stream.get_remote_peer()? {
                 return Ok(Option::from(stream.clone()));
@@ -39,7 +38,7 @@ impl Client {
     pub fn stop(mut self) {
         loop {
             if self.connected_streams.len() > 0 {
-                self.close_disconnect(true);
+                self.close_disconnect(true).unwrap();
             } else { break; }
         }
     }

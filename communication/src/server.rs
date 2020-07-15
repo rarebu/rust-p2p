@@ -28,7 +28,6 @@ impl Connectable for Server {
 
 
     fn get_connection(&self, peer_address: String) -> Result<Option<StreamAccessor>, CommunicationError> {
-        println!("Pass reference to arc({}) outside", peer_address);
         let connected_streams = self.connected_streams.lock()?;
         for stream in connected_streams.iter() {
             if peer_address == stream.get_remote_peer()? {
@@ -75,12 +74,12 @@ impl Server {
         let connected_streams = self.connected_streams.lock().unwrap();
         loop {
             if connected_streams.len() > 0 {
-                self.close_disconnect(true);
+                self.close_disconnect(true).unwrap();
             } else { break; }
         }
 
         //shut down listener thread
-        self.handle_listener.join().unwrap();
+        self.handle_listener.join().unwrap().unwrap();
     }
 
     pub fn disconnect(&self, connection: StreamAccessor, send_all: bool) -> Result<(), CommunicationError> {

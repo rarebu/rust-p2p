@@ -93,7 +93,7 @@ impl StreamHandler {
                     let mut sends = sends.lock()?;
                     if !sends.is_empty() {
                         let content = sends.pop_front().expect(PANIC_MESSAGE_THREAD);
-                        closure_serialize(content);
+                        closure_serialize(content).unwrap();
                     }
                     }
                     //shutdown option
@@ -138,6 +138,6 @@ impl StreamHandler {
 
     pub fn close_stream(self) {
         self.shutdown.store(true, Ordering::SeqCst);
-        self.handle.unwrap().join().expect(PANIC_MESSAGE_THREAD); //First unwrap should succeed everytime
+        self.handle.unwrap().join().expect(PANIC_MESSAGE_THREAD).unwrap(); //First unwrap should succeed everytime
     }
 }

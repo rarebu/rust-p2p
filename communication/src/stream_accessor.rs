@@ -28,7 +28,7 @@ impl StreamAccessor {
 
     pub fn write_message(&self, message: Message) -> Result<(), CommunicationError>{
         let mut stream = self.stream.lock()?; //hier wird strong 2
-        stream.send_message(message);
+        stream.send_message(message).unwrap();
         Ok(())
     }
 

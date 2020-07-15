@@ -17,19 +17,19 @@ fn integration_test() {
     let port = 11224;
 
     // start server with listener and client
-    let server = Server::start(ip.clone(), port);
+    let server = Server::start(ip.clone(), port).unwrap();
     let mut client = Client::start();
     let mut client2 = Client::start();
     thread::sleep(time::Duration::from_millis(100));
 
     // client connecting to server
-    client.connect(ip.clone(), port);
-    client2.connect(ip, port);
+    client.connect(ip.clone(), port).unwrap();
+    client2.connect(ip, port).unwrap();
 
     //get list of connections
-    let ccons = client.get_connections();
-    let ccons2 = client2.get_connections();
-    let scons = server.get_connections();
+    let ccons = client.get_connections().unwrap();
+    let ccons2 = client2.get_connections().unwrap();
+    let scons = server.get_connections().unwrap();
 
     // get specific connection name
     let ccon_string: String = ccons.get(0).unwrap().to_string();
@@ -41,10 +41,10 @@ fn integration_test() {
     println!("servers connections are: {:?}", scons);
 
     // get specific connection
-    let ccon = client.get_connection(ccon_string).unwrap();
-    let ccon2 = client2.get_connection(ccon_string2).unwrap();
-    let scon = server.get_connection(scon_string).unwrap();
-    let scon2 = server.get_connection(scon_string2).unwrap();
+    let ccon = client.get_connection(ccon_string).unwrap().unwrap();
+    let ccon2 = client2.get_connection(ccon_string2).unwrap().unwrap();
+    let scon = server.get_connection(scon_string).unwrap().unwrap();
+    let scon2 = server.get_connection(scon_string2).unwrap().unwrap();
 
     // client sends message
     send_message(&ccon, String::from("This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybThis is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?This is the client, anybody thasdfere?"));
@@ -68,18 +68,18 @@ fn integration_test() {
 //    scon.consume();
 
     // client disconnects stream
-    println!("clients connections are1: {:?}", client.get_connections());
-    println!("clients2 connections are2: {:?}", client2.get_connections());
-    client2.disconnect(ccon2, true);
-    println!("clients2 connections are3: {:?}", client2.get_connections());
-    client.disconnect(ccon, true);
-    println!("clients connections are4: {:?}", client.get_connections());
+    println!("clients connections are1: {:?}", client.get_connections().unwrap());
+    println!("clients2 connections are2: {:?}", client2.get_connections().unwrap());
+    client2.disconnect(ccon2, true).unwrap();
+    println!("clients2 connections are3: {:?}", client2.get_connections().unwrap());
+    client.disconnect(ccon, true).unwrap();
+    println!("clients connections are4: {:?}", client.get_connections().unwrap());
 
     // server disconnects stream
-    server.disconnect(scon, false);
-    server.disconnect(scon2, false);
-    println!("clients connections are: {:?}", client.get_connections());
-    println!("servers connections are: {:?}", server.get_connections());
+    server.disconnect(scon, false).unwrap();
+    server.disconnect(scon2, false).unwrap();
+    println!("clients connections are: {:?}", client.get_connections().unwrap());
+    println!("servers connections are: {:?}", server.get_connections().unwrap());
 
     // shutting down client and server
     client.stop();
@@ -89,7 +89,7 @@ fn integration_test() {
 
 fn send_message(stream: &StreamAccessor, content: String) {
     let content = Message::Content(content);
-    stream.write_message(content);
+    stream.write_message(content).unwrap();
 }
 
 fn receive_message(stream: &StreamAccessor) -> String {
