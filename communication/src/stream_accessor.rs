@@ -28,7 +28,7 @@ impl StreamAccessor {
 
     pub fn write_message(&self, message: Message) -> Result<(), CommunicationError>{
         let mut stream = self.stream.lock()?; //hier wird strong 2
-        stream.send_message(message).unwrap();
+        stream.send_message(message)?;
         Ok(())
     }
 
@@ -38,8 +38,8 @@ impl StreamAccessor {
     }
 
     pub fn close(self, send_all: bool) -> Result<(), CommunicationError>{
-        let stream = Arc::try_unwrap(self.stream).unwrap(); //hier auch 2
-        let stream = stream.into_inner().unwrap();
+        let stream = Arc::try_unwrap(self.stream).map_err(|_| CommunicationError::new("There are allready references to stream_accessor".to_string()))?; //hier auch 2
+        let stream = stream.into_inner()?;
         if send_all {
             return stream.close_stream_and_send_all_messages();
         } else {
