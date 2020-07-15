@@ -82,8 +82,8 @@ fn integration_test() {
     println!("servers connections are: {:?}", server.get_connections().unwrap());
 
     // shutting down client and server
-    client.stop();
-    server.stop();
+    client.stop().unwrap();
+    server.stop().unwrap();
     println!("Bye");
 }
 

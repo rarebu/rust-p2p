@@ -37,13 +37,13 @@ impl StreamAccessor {
         stream.get_message()
     }
 
-    pub fn close(self, send_all: bool) {
+    pub fn close(self, send_all: bool) -> Result<(), CommunicationError>{
         let stream = Arc::try_unwrap(self.stream).unwrap(); //hier auch 2
         let stream = stream.into_inner().unwrap();
         if send_all {
-            stream.close_stream_and_send_all_messages();
+            return stream.close_stream_and_send_all_messages();
         } else {
-            stream.close_stream();
+           return  stream.close_stream();
         }
     }
 

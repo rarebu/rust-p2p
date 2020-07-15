@@ -93,7 +93,7 @@ impl StreamHandler {
                     let mut sends = sends.lock()?;
                     if !sends.is_empty() {
                         let content = sends.pop_front().expect(PANIC_MESSAGE_THREAD);
-                        closure_serialize(content).unwrap();
+                        closure_serialize(content)?;
                     }
                     }
                     //shutdown option
@@ -128,16 +128,17 @@ impl StreamHandler {
         Ok(())
     }
 
-    pub fn close_stream_and_send_all_messages(self) {
+    pub fn close_stream_and_send_all_messages(self) -> Result<(), CommunicationError>{
 
         //alle messages die in der queue sind sollten gesendet werde, damit close message gesendet wird
         // hier boolean setzen
         self.write_all_shutdown.store(true, Ordering::SeqCst);
-        self.close_stream();
+        self.close_stream()
     }
 
-    pub fn close_stream(self) {
+    pub fn close_stream(self) -> Result<(), CommunicationError>{
         self.shutdown.store(true, Ordering::SeqCst);
-        self.handle.unwrap().join().expect(PANIC_MESSAGE_THREAD).unwrap(); //First unwrap should succeed everytime
+        // handle: Option<JoinHandle<Result<(), CommunicationError>>>
+        self.handle.expect("Could not get handle").join().expect(PANIC_MESSAGE_THREAD) //First unwrap should succeed everytime
     }
 }

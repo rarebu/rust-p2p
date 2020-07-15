@@ -20,8 +20,7 @@ impl Connectable for Server {
         let connected_streams = self.connected_streams.lock()?;
         let mut tmp = Vec::new();
         for stream in connected_streams.iter() {
-            //let stream = stream.lock().unwrap();
-            tmp.push(stream.get_remote_peer()?.clone());
+            tmp.push(stream.get_remote_peer()?);
         }
         Ok(tmp)
     }
@@ -48,15 +47,13 @@ impl Server {
             shutdown: switch.clone(),
             address: address.clone(),
             handle_listener: spawn(move || -> Result<(), CommunicationError> {
-                let listener = TcpListener::bind(address).unwrap();
+                let listener = TcpListener::bind(address).map_err(|_| CommunicationError::new("Server could not bind address".to_string()))?;
                 for stream in listener.incoming() {
                     if switch.load(Ordering::SeqCst) {
                         break;
                     }
-                    let stream = stream.unwrap();
-                    let mut streams = streams.lock().unwrap();
-                    // let v = stream.local_addr().unwrap().port();
-                    // println!("V: {}", v);
+                    let stream = stream.map_err(|_| CommunicationError::new("Incoming stream corrupted".to_string()))?;
+                    let mut streams = streams.lock()?;
                     streams.push(StreamAccessor::new(stream)?);
                 }
                 Ok(())
@@ -64,37 +61,38 @@ impl Server {
         })
     }
 
-    pub fn stop(self) {
+    pub fn stop(self) -> Result<(), CommunicationError> {
         //send poison pill
         self.shutdown.store(true, Ordering::SeqCst);
         let address = self.address.clone();
-        TcpStream::connect(address).unwrap();
+        TcpStream::connect(address).map_err(|_| CommunicationError::new("Client could not connect stream".to_string()))?;
 
         //close all streams
-        let connected_streams = self.connected_streams.lock().unwrap();
+        let connected_streams = self.connected_streams.lock()?;
         loop {
             if connected_streams.len() > 0 {
-                self.close_disconnect(true).unwrap();
+                self.close_disconnect(true)?;
             } else { break; }
         }
 
         //shut down listener thread
-        self.handle_listener.join().unwrap().unwrap();
+        self.handle_listener.join().map_err(|_| CommunicationError::new("Server could not join handle".to_string()))??;
+        Ok(())
     }
 
     pub fn disconnect(&self, connection: StreamAccessor, send_all: bool) -> Result<(), CommunicationError> {
-        let mut connected_streams = self.connected_streams.lock().unwrap();
+        let mut connected_streams = self.connected_streams.lock()?;
         let index= connected_streams.iter().position(|stream| stream.equals(&connection)
             .unwrap_or(false)).ok_or(CommunicationError::new("Stream could not be found".to_string()))?;
         connected_streams.remove(index);
-        connection.close(send_all);
+        connection.close(send_all)?;
         Ok(())
     }
 
     fn close_disconnect(&self, send_all: bool) -> Result<(), CommunicationError> {
-        let mut connected_streams = self.connected_streams.lock().unwrap();
+        let mut connected_streams = self.connected_streams.lock()?;
         let stream = connected_streams.pop().ok_or(CommunicationError::new("Connection could not be found".to_string()))?;
-        stream.close(send_all);
+        stream.close(send_all)?;
         Ok(())
     }
 }

@@ -47,9 +47,9 @@ impl Node {
         //disconnect message senden
         stream.write_message(Message::Disconnect)?;
         if stream_in_client {
-            self.client.disconnect(stream, true).unwrap();
+            self.client.disconnect(stream, true)?;
         } else {
-            self.server.disconnect(stream, true).unwrap();
+            self.server.disconnect(stream, true)?;
         }
         Ok(())
     }
@@ -70,7 +70,7 @@ impl Node {
             match message {
                 Message::Disconnect => {
                     println!("Disconnecting");
-                    stream.close(false);
+                    stream.close(false)?;
                     return Err(NodeError::StreamNotExistsAnymoreError);
                 },
                 Message::Content(message) => {
@@ -86,9 +86,10 @@ impl Node {
         Ok(connections)
     }
 
-    pub fn shutdown(self) {
-        self.server.stop();
-        self.client.stop();
+    pub fn shutdown(self) -> Result<(), NodeError>{
+        self.server.stop()?;
+        self.client.stop()?;
+        Ok(())
     }
 
     fn search_connection(&self, ip: String, port: usize) -> Result<Option<StreamAccessor>, NodeError> {

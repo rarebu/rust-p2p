@@ -49,7 +49,6 @@ fn integration_test() {
     node2.disconnect(localhost.clone(), port).unwrap();
 
 
-    println!("Jetzt könnte es aufgrund unserer fehlenden Fehlerbehandlung krachen");
     node1.receive_message_from_peer(localhost.clone(), 12000).unwrap_err();
     node1.receive_message_from_peer(localhost.clone(), 12000).unwrap_err();
     node1.receive_message_from_peer(localhost.clone(), 12000).unwrap_err();

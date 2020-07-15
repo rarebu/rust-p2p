@@ -35,18 +35,19 @@ impl Client {
         }
     }
 
-    pub fn stop(mut self) {
+    pub fn stop(mut self) -> Result<(), CommunicationError>{
         loop {
             if self.connected_streams.len() > 0 {
-                self.close_disconnect(true).unwrap();
+                self.close_disconnect(true).map_err(|_| CommunicationError::new("Could not disconnect all connections".to_string()))?
             } else { break; }
         }
+        Ok(())
     }
 
     pub fn connect(&mut self, ip: String, port: usize) -> Result<(), CommunicationError> {
 
         let address = format!("{}:{}", ip, port);
-        let stream = TcpStream::connect(address).unwrap();
+        let stream = TcpStream::connect(address).map_err(|_| CommunicationError::new("Could not connect".to_string()))?;
         self.connected_streams.push(StreamAccessor::new(stream)?);
         Ok(())
     }
@@ -56,13 +57,13 @@ impl Client {
         let index = self.connected_streams.iter().position(|stream| stream.equals(&connection)
             .unwrap_or(false)).ok_or(CommunicationError::new("Stream could not be found".to_string()))?;
         self.connected_streams.remove(index);
-        connection.close(send_all);
+        connection.close(send_all)?;
         Ok(())
     }
 
     fn close_disconnect(&mut self, send_all: bool) -> Result<(), CommunicationError> {
         let stream = self.connected_streams.pop().ok_or(CommunicationError::new("Connection could not be found".to_string()))?;
-        stream.close(send_all);
+        stream.close(send_all)?;
         Ok(())
     }
 }
