@@ -10,5 +10,5 @@ pub enum Message2 {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     Content(String),
-    Disconnect(String),
+    Disconnect,
 }

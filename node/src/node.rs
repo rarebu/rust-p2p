@@ -5,8 +5,11 @@ use communication::server::Server;
 use communication::client::Client;
 use communication::message::Message;
 use communication::stream_accessor::StreamAccessor;
+use std::error::Error;
+
 
 use std::{thread, time};
+// use std::fmt::Error;
 
 pub struct Node {
     client: Client,
@@ -30,7 +33,7 @@ impl Node {
     pub fn disconnect(self, ip: String, port: i32) {
         //sende disconnect message mit: close_stream_and_send_all_messages(self)
         let stream = self.search_connection(ip, port).unwrap(); //stream holen
-
+        stream.close(true);
     }
 
     pub fn send_message(self, content: String, ip: String, port: i32) {
@@ -39,10 +42,23 @@ impl Node {
         stream.write_message(content);
     }
 
-    pub fn receive_message(self, ip: String, port: i32) -> String {
+    pub fn receive_message(self, ip: String, port: i32) -> Result<String, &'static str> {
         // reagiere auf disconnect und schliesse stream mit: close_stream(self)
+
         let stream = self.search_connection(ip, port).unwrap(); //stream holen
-        format!("{:?}", stream.read_message().unwrap())
+        loop {
+            let message = stream.read_message().unwrap();
+            match message {
+                Message::Disconnect => {
+                    stream.close(false);
+                    return Err("Stream closed!");
+                },
+                Message::Content(message) => {
+
+                    return Ok(format!("{:?}", message));
+                },
+            }
+        }
     }
 
     fn search_connection(self, ip: String, port: i32) -> Option<StreamAccessor> {
