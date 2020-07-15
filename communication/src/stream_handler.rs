@@ -7,6 +7,9 @@ use std::time::Duration;
 use super::message::{Message, Message2};
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{Ordering, AtomicBool};
+use crate::communication_error::CommunicationError;
+
+static PANIC_MESSAGE_THREAD: &str = "Fatal error, Message-Queue should contain elements after not empty check!";
 
 #[derive(Debug)]
 pub struct StreamHandler {
@@ -16,20 +19,20 @@ pub struct StreamHandler {
     received: Arc<Mutex<VecDeque<Message>>>,
     shutdown: Arc<AtomicBool>,
     write_all_shutdown: Arc<AtomicBool>,
-    handle: Option<JoinHandle<()>>
+    handle: Option<JoinHandle<Result<(), CommunicationError>>>
 }
 
 impl StreamHandler {
-    pub fn new(mut stream: TcpStream) -> StreamHandler {
+    pub fn new(mut stream: TcpStream) -> Result<StreamHandler, CommunicationError> {
         let sends = Arc::new(Mutex::new(VecDeque::new()));
         let receives = Arc::new(Mutex::new(VecDeque::new()));
         let shutdown_switch = Arc::new(AtomicBool::new(false));
         let write_all_shutdown_switch = Arc::new(AtomicBool::new(false));
-        let stream_peer = stream.peer_addr().unwrap();
-        let stream_loc = stream.local_addr().unwrap();
+        let stream_peer = stream.peer_addr().map_err(|_| CommunicationError::new("StreamHandler: peer_address lookup failed!".to_string()))?;
+        let stream_loc = stream.local_addr().map_err(|_| CommunicationError::new("StreamHandler: local_address lookup failed!".to_string()))?;
         let mut header_information: Option<usize> = None;
         let mut buf_vec: Vec<u8> = Vec::new();
-            StreamHandler {
+            Ok(StreamHandler {
             local_peer: format!("{}:{}", stream_loc.ip(), stream_loc.port()),
             remote_peer: format!("{}:{}", stream_peer.ip(), stream_peer.port()),
             to_send: sends.clone(),
@@ -39,7 +42,7 @@ impl StreamHandler {
             handle: Option::from(spawn(move || {
                 loop {
                     //set timeout to avoid blocking loop
-                    stream.set_read_timeout(Option::from(Duration::new(0,100000000))).unwrap();
+                    stream.set_read_timeout(Option::from(Duration::new(0,100000000))).map_err(|err| CommunicationError::new(err.to_string()))?;
                     //read operation
                     let mut buffer = [0u8; 4096];
                     let count = match stream.read(&mut buffer) {
@@ -49,7 +52,7 @@ impl StreamHandler {
                     //read successful?
                     if count > 0 {
                         if header_information.is_none() {
-                            let header_msg: Message2 = bincode::deserialize(&buffer[..]).unwrap();
+                            let header_msg: Message2 = bincode::deserialize(&buffer[..])?;
                             match header_msg {
                                 Message2::Header(s) => header_information = Some(s),
                                 _ => (),
@@ -59,13 +62,13 @@ impl StreamHandler {
                         } else {
                             let vec_tmp: Vec<u8> = buffer.iter().cloned().collect();
                             buf_vec.extend(vec_tmp.iter().cloned());
-                            if header_information.unwrap() > count {
+                            if header_information.unwrap() > count { //hier ist unnwrap explizit erlaubt, da durch else sichergestellt ist, dass kein None vorhanden
                                 header_information = Some(header_information.unwrap() - count);
                                 continue;
                             } else {
-                                let msg: Message = bincode::deserialize(&buf_vec[..]).unwrap();
+                                let msg: Message = bincode::deserialize(&buf_vec[..])?;
                                 {
-                                    let mut receives = receives.lock().unwrap();
+                                    let mut receives = receives.lock()?;
                                     receives.push_back(msg);
                                     header_information = None;
                                 }
@@ -73,33 +76,34 @@ impl StreamHandler {
                         }
                     }
                     //write operation
-                    let mut closure_serialize = |content| {
+                    let mut closure_serialize = |content| -> Result<(), CommunicationError>{
 
-                        let content_message = bincode::serialize(&content).unwrap();
+                        let content_message = bincode::serialize(&content)?;
                         let header = Message2::Header(content_message.len());
-                        let header_message = bincode::serialize(&header).unwrap();
+                        let header_message = bincode::serialize(&header)?;
 
                         // println!("Header: {:?}", header);
                         // println!("Content: {:?}", content);
 
-                        stream.write_all(header_message.as_slice()).unwrap();
-                        stream.write_all(content_message.as_slice()).unwrap();
+                        stream.write_all(header_message.as_slice()).map_err(|_| CommunicationError::new_write_error())?;
+                        stream.write_all(content_message.as_slice()).map_err(|_| CommunicationError::new_write_error())?;
+                        Ok(())
                     };
                     {
-                    let mut sends = sends.lock().unwrap();
+                    let mut sends = sends.lock()?;
                     if !sends.is_empty() {
-                        let content = sends.pop_front().unwrap();
+                        let content = sends.pop_front().expect(PANIC_MESSAGE_THREAD);
                         closure_serialize(content);
                     }
                     }
                     //shutdown option
                     if shutdown_switch.load(Ordering::SeqCst) {
                         if write_all_shutdown_switch.load(Ordering::SeqCst) {
-                            let mut sends = sends.lock().unwrap();
+                            let mut sends = sends.lock()?;
                             loop {
                                 let tmp = sends.pop_back();
                                 match tmp {
-                                    Some(message) => closure_serialize(message),
+                                    Some(message) => closure_serialize(message)?,
                                     None => break,
                                 }
                             }
@@ -108,19 +112,20 @@ impl StreamHandler {
                         break;
                     }
                 }
-
+                Ok(())
             }))
-        }
+        })
     }
 
-    pub fn get_message(&mut self) -> Option<Message> {
-        let mut received = self.received.lock().unwrap();
-        received.pop_front()
+    pub fn get_message(&mut self) -> Result<Option<Message>, CommunicationError> {
+        let mut received = self.received.lock()?;
+        Ok(received.pop_front())
     }
 
-    pub fn send_message(&mut self, message: Message) {
-        let mut to_send = self.to_send.lock().unwrap();
+    pub fn send_message(&mut self, message: Message) -> Result<(), CommunicationError> {
+        let mut to_send = self.to_send.lock()?;
         to_send.push_back(message);
+        Ok(())
     }
 
     pub fn close_stream_and_send_all_messages(self) {
@@ -133,6 +138,6 @@ impl StreamHandler {
 
     pub fn close_stream(self) {
         self.shutdown.store(true, Ordering::SeqCst);
-        self.handle.unwrap().join().unwrap();
+        self.handle.unwrap().join().expect(PANIC_MESSAGE_THREAD); //First unwrap should succeed everytime
     }
 }

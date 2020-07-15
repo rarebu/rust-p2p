@@ -6,6 +6,7 @@ use communication::client::Client;
 use communication::message::Message;
 use communication::stream_accessor::StreamAccessor;
 use std::error::Error;
+use crate::node_error::NodeError;
 
 
 use std::{thread, time};
@@ -17,33 +18,33 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(ip: String, port: usize) -> Node {
+    pub fn new(ip: String, port: usize) -> Result<Node, NodeError> {
         // start server with listener and client
-        Node {
+        Ok(Node {
             client: Client::start(),
-            server: Server::start(ip, port),
-        }
+            server: Server::start(ip, port)?,
+        })
 
     }
 
-    pub fn connect(&mut self, ip: String, port: usize) -> Result<(), &'static str> {
-        match self.search_connection(ip.clone(), port) {
-            None => self.client.connect(ip.clone(), port),
+    pub fn connect(&mut self, ip: String, port: usize) -> Result<(), NodeError> {
+        match self.search_connection(ip.clone(), port)? {
+            None => self.client.connect(ip.clone(), port)?,
             _ => {
                 println!("Drop reference to arc({}:{})", ip, port);
-                return Err("Stream does already exist!")
+                return Err(NodeError::stream_allready_exists_error);
             },
         }
         Ok(())
     }
 
-    pub fn disconnect(&mut self, ip: String, port: usize) {
+    pub fn disconnect(&mut self, ip: String, port: usize) -> Result<(), NodeError> {
         //sende disconnect message mit: close_stream_and_send_all_messages(self)
         // let stream =
 
-        let stream = self.search_connection(ip.clone(), port).unwrap(); //existiert stream? wenn ja hole ihn
+        let stream = self.search_connection(ip.clone(), port)?.ok_or(NodeError::stream_not_exists_anymore_error)?; //existiert stream? wenn ja hole ihn
 
-        let ccons = self.client.get_connections();
+        let ccons = self.client.get_connections()?;
 
 
         let pattern = format!("{}:{}", ip, port);
@@ -54,27 +55,27 @@ impl Node {
         } else {
             self.server.disconnect(stream, true);
         }
-        println!("Drop reference to arc({}:{})", ip, port);
+        Ok(())
     }
 
-    pub fn send_message(&self, content: String, ip: String, port: usize) {
+    pub fn send_message(&self, content: String, ip: String, port: usize) -> Result<(), NodeError>{
         let content = Message::Content(content);
-        let stream = self.search_connection(ip.clone(), port).unwrap(); //stream holen
+        let stream = self.search_connection(ip.clone(), port)?.ok_or(NodeError::stream_not_exists_anymore_error)?; //stream holen
         stream.write_message(content);
-        println!("Drop reference to arc({}:{})", ip, port);
+        Ok(())
     }
 
-    pub fn receive_message_from_peer(&self, ip: String, port: usize) -> Result<String, &'static str> {
+    pub fn receive_message_from_peer(&self, ip: String, port: usize) -> Result<String, NodeError> {
         // reagiere auf disconnect und schliesse stream mit: close_stream(self)
 
-        let stream = self.search_connection(ip.clone(), port).unwrap(); //stream holen
+        let stream = self.search_connection(ip.clone(), port)?.ok_or(NodeError::stream_not_exists_anymore_error)?; //stream holen
         loop {
-            let message = stream.read_message().unwrap();//crash
+            let message = stream.read_message()?.ok_or(NodeError::no_message_received_error)?;//crash
             match message {
                 Message::Disconnect => {
                     stream.close(false);
                     println!("Drop reference to arc({}:{})", ip, port);
-                    return Err("Stream closed!");
+                    return Err(NodeError::stream_not_exists_anymore_error);
                 },
                 Message::Content(message) => {
                     println!("Drop reference to arc({}:{})", ip, port);
@@ -84,10 +85,10 @@ impl Node {
         }
     }
 
-    pub fn get_connected_peers(&self) -> Vec<String>{
-        let mut connections = self.server.get_connections();
-        connections.extend(self.client.get_connections());
-        connections
+    pub fn get_connected_peers(&self) -> Result<Vec<String>, NodeError>{
+        let mut connections = self.server.get_connections()?;
+        connections.extend(self.client.get_connections()?);
+        Ok(connections)
     }
 
     pub fn shutdown(self) {
@@ -95,21 +96,21 @@ impl Node {
         self.client.stop();
     }
 
-    fn search_connection(&self, ip: String, port: usize) -> Option<StreamAccessor> {
-        let x = Node::search_into_connactable(&self.client, &ip, port);
+    fn search_connection(&self, ip: String, port: usize) -> Result<Option<StreamAccessor>, NodeError> {
+        let x = Node::search_into_connactable(&self.client, &ip, port)?;
         if let None = x {
             return Node::search_into_connactable(&self.server, &ip, port);
         }
-        x
+        Ok(x)
     }
 
-    fn search_into_connactable(connectable: &Connectable, ip: &str, port: usize) -> Option<StreamAccessor>{
-        let tmp = connectable.get_connections().iter().find(|x| {
+    fn search_into_connactable(connectable: &Connectable, ip: &str, port: usize) -> Result<Option<StreamAccessor>, NodeError>{
+        let tmp = connectable.get_connections()?.iter().find(|x| {
             let address: Vec<&str> = x.split(":").collect();
             address.get(0).unwrap() == &ip && address.get(1).unwrap() == &port.to_string()
         }).map(|f|f.to_string());
-        let v = tmp.map(|x| connectable.get_connection(x.clone()).unwrap());
+        let v = tmp.map(|x| connectable.get_connection(x.clone()).unwrap().unwrap());
         // println!("v is defined: {}", v.is_some());
-        v
+        Ok(v)
     }
 }

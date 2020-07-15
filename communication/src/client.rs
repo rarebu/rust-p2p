@@ -1,6 +1,7 @@
 use super::stream_accessor::StreamAccessor;
 use std::net::TcpStream;
 use super::connectable::Connectable;
+use crate::communication_error::CommunicationError;
 
 #[derive(Debug)]
 pub struct Client {
@@ -8,22 +9,22 @@ pub struct Client {
 }
 
 impl Connectable for Client {
-    fn get_connections(&self) -> Vec<String> {
+    fn get_connections(&self) -> Result<Vec<String>, CommunicationError> {
         let mut tmp = Vec::new();
         for stream in self.connected_streams.iter() {
-            tmp.push(stream.get_remote_peer());
+            tmp.push(stream.get_remote_peer()?);
         }
-        tmp
+        Ok(tmp)
     }
 
-    fn get_connection(&self, peer_address: String) -> Option<StreamAccessor> {
+    fn get_connection(&self, peer_address: String) -> Result<Option<StreamAccessor>, CommunicationError> {
         println!("Pass reference to arc({}) outside", peer_address);
         for stream in self.connected_streams.iter() {
-            if peer_address == stream.get_remote_peer() {
-                return Option::from(stream.clone());
+            if peer_address == stream.get_remote_peer()? {
+                return Ok(Option::from(stream.clone()));
             }
         }
-        None
+        Ok(None)
     }
 }
 
@@ -43,22 +44,26 @@ impl Client {
         }
     }
 
-    pub fn connect(&mut self, ip: String, port: usize) {
+    pub fn connect(&mut self, ip: String, port: usize) -> Result<(), CommunicationError> {
 
         let address = format!("{}:{}", ip, port);
         let stream = TcpStream::connect(address).unwrap();
-        self.connected_streams.push(StreamAccessor::new(stream));
+        self.connected_streams.push(StreamAccessor::new(stream)?);
+        Ok(())
     }
 
 
-    pub fn disconnect(&mut self, connection: StreamAccessor, send_all: bool) {
-        let index = self.connected_streams.iter().position(|stream| stream.equals(&connection)).unwrap();
+    pub fn disconnect(&mut self, connection: StreamAccessor, send_all: bool)  -> Result<(), CommunicationError> {
+        let index = self.connected_streams.iter().position(|stream| stream.equals(&connection)
+            .unwrap_or(false)).ok_or(CommunicationError::new("Stream could not be found".to_string()))?;
         self.connected_streams.remove(index);
         connection.close(send_all);
+        Ok(())
     }
 
-    fn close_disconnect(&mut self, send_all: bool) {
-        let stream = self.connected_streams.pop().unwrap();
+    fn close_disconnect(&mut self, send_all: bool) -> Result<(), CommunicationError> {
+        let stream = self.connected_streams.pop().ok_or(CommunicationError::new("Connection could not be found".to_string()))?;
         stream.close(send_all);
+        Ok(())
     }
 }

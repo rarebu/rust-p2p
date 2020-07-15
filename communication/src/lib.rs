@@ -1,3 +1,4 @@
+pub mod communication_error;
 pub mod client;
 pub mod server;
 pub mod stream_accessor;

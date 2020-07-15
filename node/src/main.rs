@@ -16,7 +16,8 @@ fn main() {
     // let vec:Vec<&String> = node2.get_connected_peers().get(0).unwrap().split(":").collect();
     let connected_peers = node2.get_connected_peers();
 
-    let address: Vec<&str> = connected_peers.get(0).unwrap().split(":").collect();
+    let tmp = connected_peers.unwrap();
+    let address: Vec<&str> = tmp.get(0).unwrap().split(":").collect();
 
     let port: usize = address.get(1).unwrap().parse().unwrap();
 
