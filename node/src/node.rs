@@ -27,7 +27,7 @@ impl Node {
         match self.search_connection(ip.clone(), port)? {
             None => self.client.connect(ip.clone(), port)?,
             _ => {
-                return Err(NodeError::StreamAllreadyExistsError);
+                return Err(NodeError::StreamAlreadyExistsError);
             },
         }
         Ok(())
@@ -86,7 +86,7 @@ impl Node {
         Ok(connections)
     }
 
-    pub fn shutdown(self) -> Result<(), NodeError>{
+    pub fn shutdown(self) -> Result<(), NodeError> {
         self.server.stop()?;
         self.client.stop()?;
         Ok(())

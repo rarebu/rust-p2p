@@ -8,7 +8,7 @@ use communication::communication_error::CommunicationError;
 #[derive(Debug, Clone)]
 pub enum NodeError {
     CommunicationError(CommunicationError),
-    StreamAllreadyExistsError,
+    StreamAlreadyExistsError,
     StreamNotExistsAnymoreError,
     NoMessageReceivedError,
     MapFailedError,
@@ -19,7 +19,7 @@ impl fmt::Display for NodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             NodeError::CommunicationError(ref e) => e.fmt(f),
-            NodeError::StreamAllreadyExistsError => write!(f, "Stream does allready exist"),
+            NodeError::StreamAlreadyExistsError => write!(f, "Stream does already exist"),
             NodeError::StreamNotExistsAnymoreError => write!(f, "Stream does not exist anymore"),
             NodeError::NoMessageReceivedError => write!(f, "No messages received"),
             NodeError::MapFailedError => write!(f, "Map function failed"),

@@ -1,15 +1,14 @@
 extern crate node;
-extern crate pnet;
+use std::{thread, time};
 
-use pnet::datalink;
 use node::node::Node;
 
 fn main() {
     println!("Hello world");
-    let node = Node::new(String::from("192.168.1.101"), 15000).unwrap();
-    node.shutdown();
+    let mut node = Node::new(String::from("192.168.1.101"), 15000).unwrap();
+    node.connect(String::from("192.168.1.119"), 15000).unwrap();
+    node.send_message("Hey this is a message from host machine".to_string(), String::from("192.168.1.119"), 15000).unwrap();
+    thread::sleep(time::Duration::from_secs(20));
+    node.shutdown().unwrap();
 
-    // for iface in datalink::interfaces() {
-    //     println!("{:?}", iface.ips);
-    // }
 }
